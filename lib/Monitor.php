@@ -45,7 +45,7 @@
         * 
         * @param int $period
         */
-        public function set_сonsolidation_period($period) {
+        public function set_consolidation_period($period) {
             $this->_consol_period = $period;
             return $this;
         }
@@ -125,7 +125,7 @@
             }
             
             $this
-                ->set_сonsolidation_period($s->consol_period)
+                ->set_consolidation_period($s->consol_period)
                 ->set_max_stored_values($s->max_stored_values)
                 ->set_last_consolidation_time($s->last_consol_time)
                 ->set_last_indicators_update($s->last_indicators_update)

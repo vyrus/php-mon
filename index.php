@@ -9,7 +9,7 @@
     $action = 'show';
     
     $storage = Monitor_Storage_Array::create()
-        ->setFile($mon_file)
+        ->set_file($mon_file)
     ;
     
     if ('create' == $action)
@@ -19,30 +19,30 @@
         $max_stored_values = $store_period / $consol_period;
         
         Monitor::create()
-            ->setConsolidationPeriod($consol_period)
-            ->setMaxStoredValues($max_stored_values)
-            ->setLastConsolidationTime(time())
-            ->setLastSlotsUpdate(time())
-            ->setStorage($storage)
+            ->set_consolidation_period($consol_period)
+            ->set_max_stored_values($max_stored_values)
+            ->set_last_consolidation_time(time())
+            ->set_last_indicators_update(time())
+            ->set_storage($storage)
             ->init()
         ;
     }
     elseif ('update' == $action)
     {
         $monitor = Monitor::create($mon_file)
-            ->setStorage($storage)
-        ;
+            ->set_storage($storage);
+            
         $monitor->open();
-        $monitor->update(time(), rand(40, 55));
+            $monitor->update(time(), rand(40, 55));
         $monitor->close();
     }
     elseif ('show' == $action)
     {
         $monitor = Monitor::create($mon_file)
-            ->setStorage($storage)
-        ;
+            ->set_storage($storage);
+            
         $monitor->open();
-        print_r($monitor->show());
+            print_r($monitor->show());
         $monitor->close();
     }
     
