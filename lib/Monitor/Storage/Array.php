@@ -24,7 +24,7 @@
         * 
         * @param mixed $file
         */
-        public function setFile($file) {
+        public function set_file($file) {
             $this->_file = $file;
             return $this;
         }
@@ -63,7 +63,7 @@
             return self::ERROR_SUCCESS;
         }
         
-        public function loadSettings(& $settings) {
+        public function load_settings(& $settings) {
             $s = & $this->_storage['settings'];
             
             $settings = Class_MagicSetter::create()
@@ -76,13 +76,13 @@
             return self::ERROR_SUCCESS;
         }
         
-        public function loadIndicators(& $indicators) {
+        public function load_indicators(& $indicators) {
             $indicators = $this->_storage['indicators'];
             
             return self::ERROR_SUCCESS;
         }
         
-        public function addValue($value, $max_values) {
+        public function add_value($value, $max_values) {
             $values = & $this->_storage['values'];
             
             if ($max_values == sizeof($values)) {
@@ -92,16 +92,16 @@
             $values[] = $value;
         }
         
-        public function loadValues() {
+        public function load_values() {
             return $this->_storage['values'];
         }
         
         public function close(stdClass $p) {
-            $s = & $this->_storage;
+            $s = & $this->_storage['settings'];
             
-            $s['settings']['last_consol_time'] = $p->max_stored_values;
-            $s['settings']['last_indicators_update'] = $p->last_indicators_update;
-            $s['indicators'] = $p->indicators;
+            $s['last_consol_time'] = $p->max_stored_values;
+            $s['last_indicators_update'] = $p->last_indicators_update;
+            $this->_storage['indicators'] = $p->indicators;
             
             $data = serialize($this->_storage);
             

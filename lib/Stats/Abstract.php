@@ -3,17 +3,43 @@
     /* $Id: Abstract.php 60 2009-05-28 09:52:38Z Vyrus $ */
     
     /**
-    * Класс с общими функциями для сбора статистики.
+    * Класс с методами для подсчёта статистики индикаторов (показателей).
     */
     abstract class Stats_Abstract {
+        /**
+        * Максимальное значение индикатора.
+        * 
+        * @var const
+        */
         const OPT_MAX = 'max';
         
+        /**
+        * Минимальное значение индикатора.
+        * 
+        * @var const
+        */
         const OPT_MIN = 'min';
         
+        /**
+        * Среднее (взвешенное, если передавались весовые коэффициенты) значение
+        * индикатора.
+        * 
+        * @var const
+        */
         const OPT_AVG = 'avg';
         
+        /**
+        * Стандартное (среднеквадратичное) отклонение значений индикатора.
+        * 
+        * @var const
+        */
         const OPT_STD_DEV = 'std-dev';
         
+        /**
+        * История значений индикатора.
+        * 
+        * @var const
+        */
         const OPT_HISTORY = 'history';
         
         /**
@@ -33,11 +59,11 @@
         /**
         * Увеличивает значение счётчика.
         * 
-        * @param  string $name  Название счётчика.
-        * @param  int    $value На сколько единиц увеличить значение счётчика.
+        * @param  int|string $name  Название счётчика.
+        * @param  int        $value На сколько увеличить значение счётчика.
         * @return void
         */
-        protected function incCounter($name, $value = 1) {
+        protected function inc_counter($name, $value = 1) {
             /* Если такого счётчика ещё нет, то создаём его */
             if (!array_key_exists($name, $this->_counters)) {
                 $this->_counters[$name] = 0;
@@ -49,10 +75,10 @@
         /**
         * Получение значения счётчика.
         * 
-        * @param  string $name Название счётчика.
+        * @param  int|string $name Название счётчика.
         * @return int Текущее значение счётчика.
         */
-        protected function getCounter($name) {
+        protected function get_counter($name) {
             /* Если такого счётчика ещё нет, то создаём его */
             if (!array_key_exists($name, $this->_counters)) {
                 $this->_counters[$name] = 0;
@@ -62,15 +88,14 @@
         }
         
         /**
-        * //
+        * Создаёт новый индикатор с подсчётом указанных для него параметров.
         * 
-        * @todo rename to createIndicator?
-        * 
-        * @param  int|string $name
-        * @param  array      $options
+        * @param  int|string $name    Название индикатора.
+        * @param  array      $options Опции инликатора (параметры статистики).
         * @return void
+        * @throws InvalidArgumentException Если индикатор  уже существует. 
         */
-        protected function initIndicator($name, array $options) {
+        protected function create_indicator($name, array $options) {
             if (array_key_exists($name, $this->_indicators)) {
                 $msg = 'Индикатор с именем "' . $name .'" уже создан';
                 throw new InvalidArgumentException($msg);
@@ -118,49 +143,26 @@
         /**
         * Удаление индикатора.
         * 
-        * @param  int|string $name
+        * @param  int|string $name Название индикатора
         * @return void
         */
-        public function deleteIndicator($name) {
-            $this->checkIndicatorExistence($name);
+        public function delete_indicator($name) {
+            $this->_check_indicator_existence($name);
             unset($this->_indicators[$name]);
         }
         
         /**
-        * Возврашает массив со служебными данными индикаторов.
-        */
-        protected function _get_indicators_array() {
-            return $this->_indicators;
-        }
-        
-        /**
-        * Проверка существования индикатора. Если указанный индикатор не
-        * существует, то генерируется исключение.
+        * Обрабатывает очередное значение индикатора.
         * 
-        * @param  int|string $name
-        * @return void
-        * @throws InvalidArgumentException
-        */
-        protected function checkIndicatorExistence($name) {
-            if (!array_key_exists($name, $this->_indicators))
-            {
-                $msg = 'Индикатор с именем "' . $name .'" не найден';
-                throw new InvalidArgumentException($msg);
-            }
-        } 
-        
-        /**
-        * Обрабатывает очередное значение показателя: находит минимальное и
-        * максимальное значения из всех переданных значений и их сумму.
-        * 
-        * @param  string $name   Название показателя.
-        * @param  int    $value  Значение показателя.
-        * @param  int    $weight Весовой коэффициент значения.
-        * @param  int    $time   Время появления значения показателя.
+        * @param  int|string $name   Название индикатора.
+        * @param  int        $value  Значение индикатора.
+        * @param  int        $weight Весовой коэффициент значения.
+        * @param  int        $time   Время появления значения.
         * @return void
         */
-        protected function addIndicatorValue($name, $value, $weight = 1, $time = null) {
-            $this->checkIndicatorExistence($name);
+        protected function update_indicator($name, $value, $weight = 1,
+                                                           $time = null) {
+            $this->_check_indicator_existence($name);
             
             $i = & $this->_indicators[$name];
             
@@ -207,15 +209,14 @@
         }
         
         /**
-        * Получение статистики по значениям показателя: минимум, максимум,
-        * сумму всех значений, кол-во учтённых значений (или общую сумму весов)
-        * и среднее значение показателя.
+        * Получение значений статистических параметров индикатора, заданных при
+        * его создании.
         * 
-        * @param  string $name Название показателя.
-        * @return array Статистика значений показателя.
+        * @param  int|string $name Название индикатора.
+        * @return array Статистика значений индикатора.
         */
-        protected function getIndicatorStats($name) {
-            $this->checkIndicatorExistence($name);
+        protected function get_indicator($name) {
+            $this->_check_indicator_existence($name);
             
             $i = & $this->_indicators[$name];
             $stats = array();
@@ -233,7 +234,7 @@
                         break;
                         
                     case self::OPT_AVG:
-                        $stats['average'] = (
+                        $stats['avg'] = (
                             $i->num_values > 0
                                 ? $i->sum_weighted_values / $i->sum_weights
                                 : null
@@ -256,7 +257,7 @@
                         );
                         
                         $num_2 = pow($num_2, 2);
-                        $stats['std_deviation'] = sqrt($num_1 - $num_2);
+                        $stats['std_dev'] = sqrt($num_1 - $num_2);
                         break; 
                         
                     case self::OPT_HISTORY:
@@ -266,6 +267,40 @@
             }
             
             return $stats;
+        }
+        
+        /**
+        * Проверка существования индикатора. Если указанный индикатор не
+        * существует, то генерируется исключение.
+        * 
+        * @param  int|string $name
+        * @return void
+        * @throws InvalidArgumentException
+        */
+        protected function _check_indicator_existence($name) {
+            if (!array_key_exists($name, $this->_indicators))
+            {
+                $msg = 'Индикатор с именем "' . $name .'" не найден';
+                throw new InvalidArgumentException($msg);
+            }
+        }
+        
+        /**
+        * Возврашает массив со служебными данными индикаторов.
+        * 
+        * @return array
+        */
+        protected function _get_indicators_array() {
+            return $this->_indicators;
+        }
+        
+        /**
+        * Устанавливает значения массива индикаторов.
+        * 
+        * @param array $i Массив индикаторов.
+        */
+        protected function _set_indicators_array(array $i) {
+            $this->_indicators = $i;
         }
     }
 

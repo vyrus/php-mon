@@ -5,11 +5,11 @@
     $mon_file = MONITORS . DS . 'temperature-test';
     
     $storage = Monitor_Storage_Array::create()
-        ->setFile($mon_file)
+        ->set_file($mon_file)
     ;
     
     $monitor = Monitor::create($mon_file)
-        ->setStorage($storage)
+        ->set_storage($storage)
     ;
     
     $time = 0;
@@ -18,25 +18,17 @@
     $max_stored_values = $store_period / $consol_period;
         
     $monitor
-        ->setConsolidationPeriod($consol_period)
-        ->setMaxStoredValues($max_stored_values)
-        ->setLastConsolidationTime($time)
-        ->setLastIndicatorsUpdate($time)
+        ->set_сonsolidation_period($consol_period)
+        ->set_max_stored_values($max_stored_values)
+        ->set_last_consolidation_time($time)
+        ->set_last_indicators_update($time)
         ->init()
     ;
         
-    $temperature = array(
-        1 => 40,
-        2 => 45,
-        3 => 50
-    );
-        
     $monitor->open();
-        
         for ($i = 1; $i <= 3 * 1440; $i++) {
             $monitor->update($time + $i * Time::MINUTE, rand(40, 50));
         }
-        
     $monitor->close();
     
     $monitor->open();
