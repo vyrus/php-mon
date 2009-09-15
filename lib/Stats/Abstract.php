@@ -6,9 +6,6 @@
     * Класс с общими функциями для сбора статистики.
     */
     abstract class Stats_Abstract {
-        /**
-        * @todo Константы с опциями индикаторов.
-        */
         const OPT_MAX = 'max';
         
         const OPT_MIN = 'min';
@@ -75,68 +72,80 @@
         */
         protected function initIndicator($name, array $options) {
             if (array_key_exists($name, $this->_indicators)) {
-                throw new InvalidArgumentException('Индикатор с именем "' . $name .'" уже создан');
+                $msg = 'Индикатор с именем "' . $name .'" уже создан';
+                throw new InvalidArgumentException($msg);
             }
             
             $i = & $this->_indicators[$name];
-            $i = array('options' => $options);
+            $i = new stdClass();
+            $i->options = $options;
             
             foreach ($options as $option)
             {
                 switch ($option) {
                     case self::OPT_MAX:
-                        $i['max'] = null;
+                        $i->max = null;
                         break;
                         
                     case self::OPT_MIN:
-                        $i['min'] = null;
+                        $i->min = null;
                         break;
                         
                     case self::OPT_AVG:
-                        $i['sum_weighted_values'] = 0;
-                        $i['sum_weights'] = 0;
-                        $i['num_values']  = 0; 
+                        $i->sum_weighted_values = 0;
+                        $i->sum_weights = 0;
+                        $i->num_values = 0; 
                         break;
                     
                     case self::OPT_STD_DEV:
-                        $i['sum_values']  = 0;
-                        $i['sum_squares'] = 0;
-                        $i['num_values']  = 0;
+                        $i->sum_values  = 0;
+                        $i->sum_squares = 0;
+                        $i->num_values  = 0;
                         break;
                         
                     case self::OPT_HISTORY:
-                        $i['history'] = array();
+                        $i->history = array();
                         break;
                         
                     default:
-                        throw new InvalidArgumentException('Неизвестная опция "' . $option . '"');
+                        $msg = 'Неизвестная опция "' . $option . '"';
+                        throw new InvalidArgumentException($msg);
                         break;
                 }
             }
         }
         
         /**
-        * @todo man it.
+        * Удаление индикатора.
+        * 
+        * @param  int|string $name
+        * @return void
         */
         public function deleteIndicator($name) {
             $this->checkIndicatorExistence($name);
             unset($this->_indicators[$name]);
         }
         
+        /**
+        * Возврашает массив со служебными данными индикаторов.
+        */
         protected function _get_indicators_array() {
             return $this->_indicators;
         }
         
         /**
-        * //
+        * Проверка существования индикатора. Если указанный индикатор не
+        * существует, то генерируется исключение.
         * 
         * @param  int|string $name
         * @return void
         * @throws InvalidArgumentException
         */
         protected function checkIndicatorExistence($name) {
-            if (!array_key_exists($name, $this->_indicators)) {
-                throw new InvalidArgumentException('Индикатор с именем "' . $name .'" не найден');
+            if (!array_key_exists($name, $this->_indicators))
+            {
+                $msg = 'Индикатор с именем "' . $name .'" не найден';
+                throw new InvalidArgumentException($msg);
             }
         } 
         
@@ -153,43 +162,44 @@
         protected function addIndicatorValue($name, $value, $weight = 1, $time = null) {
             $this->checkIndicatorExistence($name);
             
-            $indicator = & $this->_indicators[$name];
+            $i = & $this->_indicators[$name];
             
-            $average       = in_array(self::OPT_AVG,     $indicator['options']);
-            $std_deviation = in_array(self::OPT_STD_DEV, $indicator['options']);
+            $average       = in_array(self::OPT_AVG,     $i->options);
+            $std_deviation = in_array(self::OPT_STD_DEV, $i->options);
             
             if ($average || $std_deviation) {
-                $indicator['num_values'] += 1;
+                $i->num_values += 1;
             }
             
-            foreach ($indicator['options'] as $option)
+            foreach ($i->options as $option)
             {
-                switch ($option) {
+                switch ($option)
+                {
                      case self::OPT_MAX:
-                        if ($value > $indicator['max'] || null === $indicator['max']) {
-                            $indicator['max'] = $value;
+                        if ($value > $i->max || null === $i->max) {
+                            $i->max = $value;
                         }
                         break;
                         
                     case self::OPT_MIN:
-                        if ($value < $indicator['min'] || null === $indicator['min']) {
-                            $indicator['min'] = $value;
+                        if ($value < $i->min || null === $i->min) {
+                            $i->min = $value;
                         }
                         break;
                         
                     case self::OPT_AVG:
-                        $indicator['sum_weighted_values'] += $weight * $value;
-                        $indicator['sum_weights'] += $weight; 
+                        $i->sum_weighted_values += $weight * $value;
+                        $i->sum_weights += $weight; 
                         break;
                     
                     case self::OPT_STD_DEV:
-                        $indicator['sum_values']  += $value;
-                        $indicator['sum_squares'] += pow($value, 2);
+                        $i->sum_values  += $value;
+                        $i->sum_squares += pow($value, 2);
                         break;
                         
                     case self::OPT_HISTORY:
                         if (null !== $time) {
-                            $indicator['history'][$time] = $value;
+                            $i->history[$time] = $value;
                         }
                         break;
                 }
@@ -207,28 +217,26 @@
         protected function getIndicatorStats($name) {
             $this->checkIndicatorExistence($name);
             
-            $indicator = & $this->_indicators[$name];
+            $i = & $this->_indicators[$name];
             $stats = array();
             
-            foreach ($indicator['options'] as $option)
+            foreach ($i->options as $option)
             {
-                switch ($option) {
+                switch ($option)
+                {
                     case self::OPT_MAX:
-                        $stats['max'] = $indicator['max'];
+                        $stats['max'] = $i->max;
                         break;
                         
                     case self::OPT_MIN:
-                        $stats['min'] = $indicator['min'];
+                        $stats['min'] = $i->min;
                         break;
                         
-                    /**
-                    * @todo return null if no values were provided.
-                    */
                     case self::OPT_AVG:
                         $stats['average'] = (
-                            $indicator['num_values'] > 0
-                                ? $indicator['sum_weighted_values'] / $indicator['sum_weights']
-                                : 0
+                            $i->num_values > 0
+                                ? $i->sum_weighted_values / $i->sum_weights
+                                : null
                         ); 
                         break;
                     
@@ -237,21 +245,22 @@
                         * @todo А правильно ли будет считаться отклонение, если вес != 1?
                         */
                         $num_1 = (
-                            $indicator['num_values'] > 0
-                                ? $indicator['sum_squares'] / $indicator['num_values']
+                            $i->num_values > 0
+                                ? $i->sum_squares / $i->num_values
                                 : 0
                         );
                         $num_2 = (
-                            $indicator['num_values'] > 0
-                                ? $indicator['sum_values'] / $indicator['num_values']
+                            $i->num_values > 0
+                                ? $i->sum_values / $i->num_values
                                 : 0
                         );
+                        
                         $num_2 = pow($num_2, 2);
                         $stats['std_deviation'] = sqrt($num_1 - $num_2);
                         break; 
                         
                     case self::OPT_HISTORY:
-                        $stats['history'] = $indicator['history'];
+                        $stats['history'] = $i->history;
                         break;
                 }
             }
