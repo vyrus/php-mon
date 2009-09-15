@@ -23,6 +23,8 @@
         
         protected $_fp;
         
+        protected $_num_slots_used;
+        
         public static function create() {
             return new self();
         }
@@ -47,6 +49,9 @@
             $data .= $this->_packULong($settings->last_consol_time);
             $data .= $this->_packULong($settings->last_slots_update);
             
+            $num_slots_used = 0;
+            $data .= $this->_packULong($num_slots_used);
+            
             $cur_cell_pointer = 0;
             $data .= $this->_packULong($cur_cell_pointer);
             
@@ -70,7 +75,7 @@
             return self::ERROR_SUCCESS;
         }
         
-        public function getSettings(& $settings) {
+        public function load(& $settings) {
             if (false === ($data = $this->_read(4 * 4))) {
                 return self::ERROR_READ;
             }
@@ -79,6 +84,7 @@
             $ms = $this->_unpackULong(substr($data, 4, 4));
             $lc = $this->_unpackULong(substr($data, 8, 4));
             $ls = $this->_unpackULong(substr($data, 12, 4));
+            $su = $this->_unpackULong(substr($data, 16, 4));
             
             $settings = Class_MagicSetter::create()
                 ->consol_period($cs)
@@ -87,7 +93,13 @@
                 ->last_slots_update($ls)
             ;
             
+            $this->_num_slots_used = $su;
+            
             return self::ERROR_SUCCESS;
+        }
+        
+        public function loadSlots() {
+            //
         }
         
         protected function _packULong($long) {

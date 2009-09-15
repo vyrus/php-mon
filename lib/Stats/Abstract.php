@@ -7,6 +7,10 @@
     */
     abstract class Stats_Abstract {
         /**
+        * @todo Константы с опциями индикаторов.
+        */
+        
+        /**
         * Массив счётчиков.
         * 
         * @var array
@@ -54,6 +58,8 @@
         /**
         * //
         * 
+        * @todo rename to createIndicator?
+        * 
         * @param  int|string $name
         * @param  array      $options
         * @return void
@@ -98,6 +104,14 @@
                         break;
                 }
             }
+        }
+        
+        /**
+        * @todo man it.
+        */
+        public function deleteIndicator($name) {
+            $this->checkIndicatorExistence($name);
+            unset($this->indicators[$name]);
         }
         
         /**
@@ -194,6 +208,9 @@
                         $stats['min'] = $indicator['min'];
                         break;
                         
+                    /**
+                    * @todo return null if no values were provided.
+                    */
                     case 'average':
                         $stats['average'] = (
                             $indicator['num_values'] > 0

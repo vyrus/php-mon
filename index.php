@@ -6,16 +6,17 @@
     
     $action = 'create';
     $action = 'update';
+    $action = 'show';
+    
+    $storage = Monitor_Storage_Array::create()
+        ->setFile($mon_file)
+    ;
     
     if ('create' == $action)
     {
-        $consol_period = 5 * Time::MINUTE;
+        $consol_period = 5 * Time::SECOND;
         $store_period = 365 * Time::DAY;
         $max_stored_values = $store_period / $consol_period;
-        
-        $storage = Monitor_Storage_Rrd::create()
-            ->setFile($mon_file)
-        ;
         
         Monitor::create()
             ->setConsolidationPeriod($consol_period)
@@ -28,16 +29,21 @@
     }
     elseif ('update' == $action)
     {
-        $storage = Monitor_Storage_Rrd::create()
-            ->setFile($mon_file)
-        ;
-        
-        Monitor::create($mon_file)
+        $monitor = Monitor::create($mon_file)
             ->setStorage($storage)
-            ->open()
-            ->update(time(), '47')
-            ->close()
         ;
+        $monitor->open();
+        $monitor->update(time(), rand(40, 55));
+        $monitor->close();
     }
-
+    elseif ('show' == $action)
+    {
+        $monitor = Monitor::create($mon_file)
+            ->setStorage($storage)
+        ;
+        $monitor->open();
+        print_r($monitor->show());
+        $monitor->close();
+    }
+    
 ?>

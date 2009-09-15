@@ -3,15 +3,15 @@
     class Monitor extends Stats_Abstract {
         const ERROR_SUCCESS = 'error-success';
         
-        const ERROR_INIT_STORAGE = 'error-init-storage';
+        const ERROR_STORAGE_INIT = 'error-storage-init';
         
-        const ERROR_OPEN = 'error-open';
+        const ERROR_STORAGE_OPEN = 'error-open';
         
-        const ERROR_GET_SETTINGS = 'error-get-settings';
+        const ERROR_STORAGE_CLOSE = 'error-close';
         
-        protected $_slots = array();
+        const ERROR_LOAD_SETTINGS = 'error-load-settings';
         
-        protected $_records = array();
+        const ERROR_LOAD_INDICATORS = 'error-load-indicators';
         
         protected $_last_consol_time = 0;
         
@@ -93,16 +93,22 @@
         * @return mixed
         */
         public function init() {
+            $this->initIndicator(0, array('max', 'min', 'average'));
+            
             $settings = Class_MagicSetter::create()
                 ->consol_period($this->_consol_period)
                 ->max_stored_values($this->_max_stored_values)
                 ->last_consol_time($this->_last_consol_time)
                 ->last_slots_update($this->_last_slots_update)
+                /**
+                * @todo self::_getIndicators().
+                */
+                ->indicators($this->indicators)
             ;
             
             $success = Monitor_Storage_Abstract::ERROR_SUCCESS; 
             if ($success !== $this->_storage->init($settings)) {
-                return self::ERROR_INIT_STORAGE;
+                return self::ERROR_STORAGE_INIT;
             }
             
             return self::ERROR_SUCCESS;
@@ -111,12 +117,12 @@
         public function open() {
             $success = Monitor_Storage_Abstract::ERROR_SUCCESS; 
             if ($success !== $this->_storage->open()) {
-                return self::ERROR_OPEN;
+                return self::ERROR_STORAGE_OPEN;
             }
             
             $settings = null;
-            if ($success !== $this->_storage->getSettings($settings)) {
-                return self::ERROR_GET_SETTINGS;
+            if ($success !== $this->_storage->loadSettings($settings)) {
+                return self::ERROR_LOAD_SETTINGS;
             }
             
             $this
@@ -125,33 +131,59 @@
                 ->setLastConsolidationTime($settings->last_consol_time)
                 ->setLastSlotsUpdate($settings->last_slots_update)
             ;
+            
+            $result = $this->_storage->loadIndicators($this->indicators);
+            if ($success !== $result) {
+                return self::ERROR_LOAD_INDICATORS;
+            }
+            
+            return self::ERROR_SUCCESS;
         }
         
         public function update($time, $value) {
-            $this->_slots[] = $value;
+            $this->addIndicatorValue(0, $value);
+                
             $this->_last_slots_update = $time;
-            
             $diff = $this->_last_slots_update - $this->_last_consol_time;
             
             if ($diff >= $this->_consol_period)
             {
-                $this->_consolidate();
+                $value = $this->getIndicatorStats(0);
+                $value['period'] = array($this->_last_consol_time,
+                                         $this->_last_slots_update);
+                
+                $this->deleteIndicator(0);
+                $this->initIndicator(0, array('max', 'min', 'average'));
+            
+                $this->_storage->addValue($value, $this->_max_stored_values);
                 $this->_last_consol_time = $this->_last_slots_update;
             }
             
-            return $this;
+            return self::ERROR_SUCCESS;
         }
         
-        protected function _consolidate() {
-            $rec = Monitor_Record::create()
-                ->start_time($this->_last_stats_update)
-                ->stop_time($this->_last_slots_update)
-                ->type(Monitor_Record::VALUE_TYPE_AVG)
-                ->value(array_sum($this->_slots) / sizeof($this->_slots))
+        public function close() {
+            $settings = Class_MagicSetter::create()
+                ->consol_period($this->_consol_period)
+                ->max_stored_values($this->_max_stored_values)
+                ->last_consol_time($this->_last_consol_time)
+                ->last_slots_update($this->_last_slots_update)
+                /**
+                * @todo self::_getIndicators().
+                */
+                ->indicators($this->indicators)
             ;
-                
-            $this->_records[] = $rec;
-            $this->_slots = array();
+            
+            $success = Monitor_Storage_Abstract::ERROR_SUCCESS;
+            if ($success !== $this->_storage->close($settings)) {
+                return self::ERROR_STORAGE_CLOSE;
+            }
+            
+            return self::ERROR_SUCCESS;
+        }
+        
+        public function show() {
+            return $this->_storage->loadValues();
         }
     }
 
