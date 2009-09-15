@@ -39,11 +39,16 @@
             return $this;
         }
         
-        public function setLastConsolTime($time) {
+        public function setLastConsolidationTime($time) {
             $this->_last_consol_time = $time;
             return $this; 
         }
         
+        /**
+        * Устанавливает, сколько значений монитор должен сохранять.
+        * 
+        * @param int $num_values
+        */
         public function setNumStoredValues($num_values) {
             $this->_num_stored_values = $num_values;
             return $this;

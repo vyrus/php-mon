@@ -14,7 +14,7 @@
         $num_stored_values = $store_period / $consol_period;
         
         Monitor::create()
-            ->setLastConsolTime(time())
+            ->setLastConsolidationTime(time())
             ->setConsolidationPeriod($consol_period)
             ->setNumStoredValues($num_stored_values)
             ->freeze($mon_file)
