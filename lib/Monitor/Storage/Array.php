@@ -29,15 +29,15 @@
             return $this;
         }
         
-        public function init(stdClass $settings) {
+        public function init(stdClass $s) {
             $storage = array(
                 'settings' => array(
-                    'max_stored_values' => $settings->max_stored_values,
-                    'consol_period'     => $settings->consol_period,
-                    'last_consol_time'  => $settings->last_consol_time,
-                    'last_slots_update' => $settings->last_slots_update
+                    'max_stored_values' => $s->max_stored_values,
+                    'consol_period'     => $s->consol_period,
+                    'last_consol_time'  => $s->last_consol_time,
+                    'last_indicators_update' => $s->last_indicators_update
                 ),
-                'indicators' => $settings->indicators,
+                'indicators' => $s->indicators,
                 'values' => array()
             );
             
@@ -70,7 +70,7 @@
                 ->max_stored_values($s['max_stored_values'])
                 ->consol_period($s['consol_period'])
                 ->last_consol_time($s['last_consol_time'])
-                ->last_slots_update($s['last_slots_update'])
+                ->last_indicators_update($s['last_indicators_update'])
             ;
             
             return self::ERROR_SUCCESS;
@@ -96,12 +96,12 @@
             return $this->_storage['values'];
         }
         
-        public function close(stdClass $settings) {
+        public function close(stdClass $p) {
             $s = & $this->_storage;
             
-            $s['settings']['last_consol_time'] = $settings->max_stored_values;
-            $s['settings']['last_slots_update'] = $settings->last_slots_update;
-            $s['indicators'] = $settings->indicators;
+            $s['settings']['last_consol_time'] = $p->max_stored_values;
+            $s['settings']['last_indicators_update'] = $p->last_indicators_update;
+            $s['indicators'] = $p->indicators;
             
             $data = serialize($this->_storage);
             
@@ -110,27 +110,6 @@
             }
             
             return self::ERROR_SUCCESS;
-        }
-        
-        protected function _packULong($long) {
-            return pack('N', $long);
-        }
-        
-        protected function _unpackULong($ulong) {
-            return current(unpack('N', $ulong));
-        }
-        
-        protected function _read($num_bytes) {
-            return fread($this->_fp, $num_bytes);
-        }
-        
-        protected function _write($data) {
-            if (false === ($bytes_written = fwrite($this->_fp, $data))) {
-                return false;
-            }
-            
-            $len = strlen($data);
-            return $bytes_written === $len;
         }
     }
 

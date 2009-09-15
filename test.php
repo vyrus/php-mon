@@ -21,7 +21,7 @@
         ->setConsolidationPeriod($consol_period)
         ->setMaxStoredValues($max_stored_values)
         ->setLastConsolidationTime($time)
-        ->setLastSlotsUpdate($time)
+        ->setLastIndicatorsUpdate($time)
         ->init()
     ;
         

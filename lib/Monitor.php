@@ -15,7 +15,7 @@
         
         protected $_last_consol_time = 0;
         
-        protected $_last_slots_update = 0;
+        protected $_last_indicators_update = 0;
         
         protected $_consol_period;
         
@@ -38,41 +38,42 @@
             return new self();
         }
         
-        public function freeze($path) {
-            $data = serialize($this);
-            return file_put_contents($path, $data);
-        }
-        
-        public static function thaw($path) {
-            $data = file_get_contents($path);
-            $monitor = unserialize($data);
-            
-            return $monitor;
-        }
-        
+        /**
+        * Устанавливает период консолидации поступающих значений (поступающие 
+        * значения накапливаются в индикаторах, статистика которых и будет
+        * сохранена как итоговая).
+        * 
+        * @param int $period
+        */
         public function setConsolidationPeriod($period) {
             $this->_consol_period = $period;
-            return $this;
-        }
-        
-        public function setLastConsolidationTime($time) {
-            $this->_last_consol_time = $time;
-            return $this; 
-        }
-        
-        public function setLastSlotsUpdate($time) {
-            $this->_last_slots_update = $time;
             return $this;
         }
         
         /**
         * Устанавливает, сколько значений монитор должен сохранять.
         * 
-        * @param int $num_values
+        * @param  int $num_values
         * @return Monitor Fluent interface.
         */
         public function setMaxStoredValues($num_values) {
             $this->_max_stored_values = $num_values;
+            return $this;
+        }
+        
+        /**
+        * Устанавливает время последней консолидации значений (как давно был
+        * сброшена статистика индикатора).
+        * 
+        * @param int $time
+        */
+        public function setLastConsolidationTime($time) {
+            $this->_last_consol_time = $time;
+            return $this; 
+        }
+        
+        public function setLastIndicatorsUpdate($time) {
+            $this->_last_indicators_update = $time;
             return $this;
         }
         
@@ -93,17 +94,15 @@
         * @return mixed
         */
         public function init() {
-            $this->initIndicator(0, array('max', 'min', 'average'));
+            $opts = array(self::OPT_MAX, self::OPT_MIN, self::OPT_AVG);
+            $this->initIndicator(0, $opts);
             
             $settings = Class_MagicSetter::create()
                 ->consol_period($this->_consol_period)
                 ->max_stored_values($this->_max_stored_values)
                 ->last_consol_time($this->_last_consol_time)
-                ->last_slots_update($this->_last_slots_update)
-                /**
-                * @todo self::_getIndicators().
-                */
-                ->indicators($this->indicators)
+                ->last_indicators_update($this->_last_indicators_update)
+                ->indicators($this->_get_indicators_array())
             ;
             
             $success = Monitor_Storage_Abstract::ERROR_SUCCESS; 
@@ -129,7 +128,7 @@
                 ->setConsolidationPeriod($settings->consol_period)
                 ->setMaxStoredValues($settings->max_stored_values)
                 ->setLastConsolidationTime($settings->last_consol_time)
-                ->setLastSlotsUpdate($settings->last_slots_update)
+                ->setLastIndicatorsUpdate($settings->last_indicators_update)
             ;
             
             $result = $this->_storage->loadIndicators($this->indicators);
@@ -143,20 +142,21 @@
         public function update($time, $value) {
             $this->addIndicatorValue(0, $value);
                 
-            $this->_last_slots_update = $time;
-            $diff = $this->_last_slots_update - $this->_last_consol_time;
+            $this->_last_indicators_update = $time;
+            $diff = $this->_last_indicators_update - $this->_last_consol_time;
             
             if ($diff >= $this->_consol_period)
             {
                 $value = $this->getIndicatorStats(0);
                 $value['period'] = array($this->_last_consol_time,
-                                         $this->_last_slots_update);
+                                         $this->_last_indicators_update);
                 
                 $this->deleteIndicator(0);
-                $this->initIndicator(0, array('max', 'min', 'average'));
+                $opts = array(self::OPT_MAX, self::OPT_MIN, self::OPT_AVG);
+                $this->initIndicator(0, $opts);
             
                 $this->_storage->addValue($value, $this->_max_stored_values);
-                $this->_last_consol_time = $this->_last_slots_update;
+                $this->_last_consol_time = $this->_last_indicators_update;
             }
             
             return self::ERROR_SUCCESS;
@@ -167,11 +167,8 @@
                 ->consol_period($this->_consol_period)
                 ->max_stored_values($this->_max_stored_values)
                 ->last_consol_time($this->_last_consol_time)
-                ->last_slots_update($this->_last_slots_update)
-                /**
-                * @todo self::_getIndicators().
-                */
-                ->indicators($this->indicators)
+                ->last_indicators_update($this->_last_indicators_update)
+                ->indicators($this->_get_indicators_array())
             ;
             
             $success = Monitor_Storage_Abstract::ERROR_SUCCESS;
