@@ -4,14 +4,19 @@
     
     $mon_file = MONITORS . DS . 'default';
     
-    //$action = 'create';
+    $action = 'create';
     //$action = 'update';
     
     if ('create' == $action)
     {
+        $consol_period = 5 * Time::MINUTE;
+        $store_period = Time::DAY;
+        $num_stored_values = $store_period / $consol_period;
+        
         Monitor::create()
             ->setLastConsolTime(time())
-            ->setConsolidatePeriod(5 * Time::MINUTE)
+            ->setConsolidationPeriod($consol_period)
+            ->setStoredValues($num_stored_values)
             ->freeze($mon_file)
         ;
     }

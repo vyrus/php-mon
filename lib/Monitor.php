@@ -11,6 +11,13 @@
         
         protected $_consol_period;
         
+        /**
+        * Сколько консолидированных значений должен постоянно хранить монитор.
+        * 
+        * @var int
+        */
+        protected $_num_stored_values;
+        
         public static function create() {
             return new self();
         }
@@ -27,10 +34,7 @@
             return $monitor;
         }
         
-        /**
-        * @todo Consolidation period?
-        */
-        public function setConsolidatePeriod($period) {
+        public function setConsolidationPeriod($period) {
             $this->_consol_period = $period;
             return $this;
         }
@@ -38,6 +42,11 @@
         public function setLastConsolTime($time) {
             $this->_last_consol_time = $time;
             return $this; 
+        }
+        
+        public function setStoredValues($num_values) {
+            $this->_num_stored_values = $num_values;
+            return $this;
         }
         
         public function update($time, $value) {
