@@ -2,29 +2,41 @@
     
     require_once 'init.php';
     
-    $mon_file = MONITORS . DS . 'default';
+    $mon_file = MONITORS . DS . 'temperature';
     
     $action = 'create';
-    //$action = 'update';
+    $action = 'update';
     
     if ('create' == $action)
     {
         $consol_period = 5 * Time::MINUTE;
-        $store_period = Time::DAY;
-        $num_stored_values = $store_period / $consol_period;
+        $store_period = 365 * Time::DAY;
+        $max_stored_values = $store_period / $consol_period;
+        
+        $storage = Monitor_Storage_Rrd::create()
+            ->setFile($mon_file)
+        ;
         
         Monitor::create()
-            ->setLastConsolidationTime(time())
             ->setConsolidationPeriod($consol_period)
-            ->setNumStoredValues($num_stored_values)
-            ->freeze($mon_file)
+            ->setMaxStoredValues($max_stored_values)
+            ->setLastConsolidationTime(time())
+            ->setLastSlotsUpdate(time())
+            ->setStorage($storage)
+            ->init()
         ;
     }
     elseif ('update' == $action)
     {
-        Monitor::thaw($mon_file)
+        $storage = Monitor_Storage_Rrd::create()
+            ->setFile($mon_file)
+        ;
+        
+        Monitor::create($mon_file)
+            ->setStorage($storage)
+            ->open()
             ->update(time(), '47')
-            ->freeze($mon_file)
+            ->close()
         ;
     }
 

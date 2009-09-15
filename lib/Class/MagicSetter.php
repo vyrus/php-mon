@@ -1,6 +1,10 @@
 <?php
 
-    class Class_MagicSetter {
+    class Class_MagicSetter extends stdClass {
+        public static function create() {
+            return new self();
+        }
+        
         protected function _setAttribute($name, $value) {
             $this->$name = $value;
             return $this;
