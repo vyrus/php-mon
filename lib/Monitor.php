@@ -44,7 +44,7 @@
             return $this; 
         }
         
-        public function setStoredValues($num_values) {
+        public function setNumStoredValues($num_values) {
             $this->_num_stored_values = $num_values;
             return $this;
         }
